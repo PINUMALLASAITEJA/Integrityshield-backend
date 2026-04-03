@@ -3,11 +3,11 @@ function login() {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    fetch('/api/auth/login', {
+    fetch('/api/student/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            userIdentifier: username,
+            rollNumber: username,
             password: password
         })
     })
@@ -15,11 +15,11 @@ function login() {
         if (!res.ok) {
             throw new Error("Invalid credentials");
         }
-        return res.text();
+        return res.json();
     })
-    .then(token => {
+    .then(data => {
 
-        localStorage.setItem("token", token);
+        localStorage.setItem("token", data.token);
         window.location.href = "faculty-dashboard.html";
     })
     .catch(() => {
