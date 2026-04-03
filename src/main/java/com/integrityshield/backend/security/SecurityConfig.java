@@ -44,10 +44,13 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
+                // ✅ Allow preflight
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                // ✅ PUBLIC ENDPOINTS (IMPORTANT)
                 .requestMatchers(
                     "/",
+                    "/test",
                     "/login.html",
                     "/register.html",
                     "/faculty-dashboard.html",
@@ -56,13 +59,15 @@ public class SecurityConfig {
                     "/ws/**"
                 ).permitAll()
 
+                // ✅ AUTH APIs
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/student/login").permitAll()
 
-                // 🔥 FIX: REQUIRE AUTH HERE
+                // 🔐 PROTECTED
                 .requestMatchers("/api/student/**").authenticated()
 
-                .anyRequest().authenticated()
+                // ❗ fallback
+                .anyRequest().permitAll()
             )
 
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
