@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IntegrityShield - Faculty Dashboard</title>
+
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/faculty-dashboard.css?v=10">
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+
+<body>
+
+<div class="topbar glass">
+    <div class="logo">
+        IntegrityShield
+        <span id="sessionStatus" class="status-badge inactive">Inactive</span>
+    </div>
+
+    <div class="controls">
+        <button onclick="showHome()" class="btn btn-primary">Home</button>
+        <button onclick="showAccess()" class="btn btn-primary">Allow Access</button>
+        <button onclick="startSession()" class="btn btn-primary">Start</button>
+        <button onclick="endSession()" class="btn btn-primary">End</button>
+        <button onclick="logout()" class="btn btn-danger">Logout</button>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- HOME SECTION -->
+    <div id="homeSection">
+        <h3>Students Online</h3>
+        <ul id="studentsList"></ul>
+    </div>
+
+    <!-- ACCESS SECTION -->
+    <div id="accessPanel" style="display:none; margin-top:30px;">
+
+        <h3>Allow Applications and URLs</h3>
+
+        <div class="permission-grid">
+
+            <!-- APPS -->
+            <div>
+                <h4>Applications</h4>
+
+                <div class="permission-input">
+                    <input id="appInput" placeholder="chrome" class="glass-input">
+                    <button onclick="addAllowedApp()" class="btn btn-primary">Add</button>
+                </div>
+
+                <ul id="allowedAppsList"></ul>
+            </div>
+
+            <!-- URLS -->
+            <div>
+                <h4>URLs</h4>
+
+                <div class="permission-input">
+                    <input id="urlInput" placeholder="youtube.com" class="glass-input">
+                    <button onclick="addAllowedUrl()" class="btn btn-primary">Add</button>
+                </div>
+
+                <ul id="allowedUrlsList"></ul>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script src="js/faculty-dashboard.js?v=10"></script>
+
+</body>
+</html>
