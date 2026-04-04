@@ -71,8 +71,8 @@ function showAccess() {
 
 function connectWebSocket() {
 
-    const socket = new SockJS('/ws');
-    stompClient = Stomp.over(socket);
+	const socket = new WebSocket("wss://integrityshield-backend-2.onrender.com/ws");
+	stompClient = Stomp.over(socket);
 
     stompClient.connect(
         { Authorization: "Bearer " + localStorage.getItem("token") },
