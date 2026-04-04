@@ -258,3 +258,22 @@
     padding: 12px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+.status-badge {
+    margin-left: 15px;
+    padding: 6px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.status-badge.active {
+    background: #22c55e;
+    color: #fff;
+    box-shadow: 0 0 10px #22c55e;
+}
+
+.status-badge.inactive {
+    background: #ef4444;
+    color: #fff;
+    box-shadow: 0 0 10px #ef4444;
+}

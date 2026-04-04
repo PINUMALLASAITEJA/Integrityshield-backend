@@ -16,10 +16,9 @@ document.addEventListener("DOMContentLoaded", () => {
 let stompClient = null;
 let studentViolations = {};
 
-/* ---------------- SESSION CONTROL ---------------- */
+/* ---------------- SESSION ---------------- */
 
 function startSession() {
-
     fetch('/api/faculty/start-session?allowedApps=', {
         method: 'POST',
         headers: getAuthHeader()
@@ -29,11 +28,10 @@ function startSession() {
         alert(msg);
         updateSessionStatus(true);
     })
-    .catch(() => alert("Failed to start session"));
+    .catch(() => alert("Failed"));
 }
 
 function stopSession() {
-
     fetch('/api/faculty/stop-session', {
         method: 'POST',
         headers: getAuthHeader()
@@ -42,20 +40,22 @@ function stopSession() {
     .then(msg => {
         alert(msg);
         updateSessionStatus(false);
-    })
-    .catch(() => alert("Failed to stop session"));
+    });
 }
 
 function updateSessionStatus(active) {
 
-    const status = document.getElementById("sessionStatus");
-    if (!status) return;
+    const badge = document.getElementById("sessionStatus");
 
-    status.innerText = active ? "Session Active" : "No Active Session";
-    status.style.color = active ? "green" : "red";
+    if (!badge) return;
+
+    badge.innerText = active ? "Active" : "Inactive";
+
+    badge.classList.remove("active", "inactive");
+    badge.classList.add(active ? "active" : "inactive");
 }
 
-/* ---------------- VIEW SWITCH ---------------- */
+/* ---------------- VIEW ---------------- */
 
 function showHome() {
     document.getElementById("homeSection").style.display = "block";
@@ -67,7 +67,7 @@ function showAccess() {
     document.getElementById("accessPanel").style.display = "block";
 }
 
-/* ---------------- WEBSOCKET ---------------- */
+/* ---------------- SOCKET ---------------- */
 
 function connectWebSocket() {
 
@@ -76,17 +76,15 @@ function connectWebSocket() {
 
     stompClient.connect(
         { Authorization: "Bearer " + localStorage.getItem("token") },
-        function () {
+        () => {
 
-            stompClient.subscribe('/topic/faculty-alerts', function (msg) {
-                handleEscalation(JSON.parse(msg.body));
-            });
+            stompClient.subscribe('/topic/faculty-alerts', msg =>
+                handleEscalation(JSON.parse(msg.body))
+            );
 
-            stompClient.subscribe('/topic/student-join', function (msg) {
-                addStudent(msg.body);
-            });
-
-            loadExistingStudents();
+            stompClient.subscribe('/topic/student-join', msg =>
+                addStudent(msg.body)
+            );
         }
     );
 }
@@ -172,41 +170,27 @@ function showStudentDetails(roll) {
 
 /* ---------------- PERMISSIONS ---------------- */
 
-function addAllowedApp() {
-    const app = document.getElementById("appInput").value;
-
-    fetch('/api/faculty/allow-app', {
-        method: 'POST',
-        headers: getAuthHeader(),
-        body: JSON.stringify(app)
-    }).then(loadAllowedApps);
-}
-
 function loadAllowedApps() {
-
-    const list = document.getElementById("allowedAppsList");
-    list.innerHTML = "";
 
     fetch('/api/faculty/allowed-apps', {
         headers: getAuthHeader()
     })
-    .then(res => res.json())
+    .then(res => res.ok ? res.json() : [])
     .then(data => {
+
+        const list = document.getElementById("allowedAppsList");
+        list.innerHTML = "";
+
+        if (!Array.isArray(data)) return;
 
         data.forEach(app => {
 
             const li = document.createElement("li");
 
-            const span = document.createElement("span");
-            span.innerText = app;
-
-            const btn = document.createElement("button");
-            btn.innerText = "X";
-            btn.className = "remove-btn";
-            btn.onclick = () => removeAllowedApp(app);
-
-            li.appendChild(span);
-            li.appendChild(btn);
+            li.innerHTML = `
+                <span>${app}</span>
+                <button class="remove-btn" onclick="removeAllowedApp('${app}')">X</button>
+            `;
 
             list.appendChild(li);
         });
@@ -220,43 +204,27 @@ function removeAllowedApp(app) {
     }).then(loadAllowedApps);
 }
 
-/* ---------------- URLS ---------------- */
-
-function addAllowedUrl() {
-    const url = document.getElementById("urlInput").value;
-
-    fetch('/api/faculty/allow-url', {
-        method: 'POST',
-        headers: getAuthHeader(),
-        body: JSON.stringify(url)
-    }).then(loadAllowedUrls);
-}
-
 function loadAllowedUrls() {
-
-    const list = document.getElementById("allowedUrlsList");
-    list.innerHTML = "";
 
     fetch('/api/faculty/allowed-urls', {
         headers: getAuthHeader()
     })
-    .then(res => res.json())
+    .then(res => res.ok ? res.json() : [])
     .then(data => {
+
+        const list = document.getElementById("allowedUrlsList");
+        list.innerHTML = "";
+
+        if (!Array.isArray(data)) return;
 
         data.forEach(url => {
 
             const li = document.createElement("li");
 
-            const span = document.createElement("span");
-            span.innerText = url;
-
-            const btn = document.createElement("button");
-            btn.innerText = "X";
-            btn.className = "remove-btn";
-            btn.onclick = () => removeAllowedUrl(url);
-
-            li.appendChild(span);
-            li.appendChild(btn);
+            li.innerHTML = `
+                <span>${url}</span>
+                <button class="remove-btn" onclick="removeAllowedUrl('${url}')">X</button>
+            `;
 
             list.appendChild(li);
         });

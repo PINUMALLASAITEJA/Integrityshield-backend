@@ -44,31 +44,29 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // ✅ Allow preflight
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            	    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // ✅ PUBLIC ENDPOINTS (IMPORTANT)
-                .requestMatchers(
-                    "/",
-                    "/test",
-                    "/login.html",
-                    "/register.html",
-                    "/faculty-dashboard.html",
-                    "/css/**",
-                    "/js/**",
-                    "/ws/**"
-                ).permitAll()
+            	    .requestMatchers(
+            	        "/",
+            	        "/test",
+            	        "/login.html",
+            	        "/register.html",
+            	        "/faculty-dashboard.html",
+            	        "/css/**",
+            	        "/js/**",
+            	        "/ws/**"
+            	    ).permitAll()
 
-                // ✅ AUTH APIs
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/student/login").permitAll()
+            	    .requestMatchers("/api/auth/**").permitAll()
+            	    .requestMatchers("/api/student/login").permitAll()
 
-                // 🔐 PROTECTED
-                .requestMatchers("/api/student/**").authenticated()
+            	    // 🔥 FIX
+            	    .requestMatchers("/api/faculty/**").hasRole("FACULTY")
 
-                // ❗ fallback
-                .anyRequest().permitAll()
-            )
+            	    .requestMatchers("/api/student/**").authenticated()
+
+            	    .anyRequest().permitAll()
+            	)
 
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

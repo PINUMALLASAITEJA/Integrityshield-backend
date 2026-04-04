@@ -26,14 +26,9 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .setSubject(userIdentifier)
-
-                // 🔥 FIX: ADD ROLE PREFIX
-                .claim("role", "ROLE_" + role)
-
+                .claim("role", "ROLE_" + role.toUpperCase()) // 🔥 FIX
                 .setIssuedAt(new Date())
-                .setExpiration(
-                        new Date(System.currentTimeMillis() + EXPIRATION)
-                )
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
