@@ -10,8 +10,8 @@ COPY . .
 # Build the application
 RUN chmod +x mvnw && ./mvnw clean package -Dmaven.test.skip=true
 
-# Expose port
-EXPOSE 8080
+# 🔥 IMPORTANT: match Spring Boot port
+EXPOSE 10000
 
 # Run the application
 CMD ["java", "-jar", "target/backend-0.0.1-SNAPSHOT.jar"]
