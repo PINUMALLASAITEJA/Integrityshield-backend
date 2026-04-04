@@ -9,6 +9,7 @@ import com.integrityshield.backend.service.PermissionService;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -36,26 +37,22 @@ public class FacultyController {
     /* ================= SESSION CONTROL ================= */
 
     @PostMapping("/start-session")
-    public String startSession(@RequestParam(required = false) String allowedApps) {
+    public String startSession(@RequestParam(required = false) String allowedApps,
+                               Authentication auth) {
 
         System.out.println("📡 Start session request received");
+        System.out.println("👤 Faculty: " + auth.getName());
 
         if (sessionService.getActiveSessionId() != null) {
-            System.out.println("⚠️ Session already active");
             return "Session already active";
         }
 
-        // 🔥 FIX: handle null safely
         if (allowedApps == null || allowedApps.trim().isEmpty()) {
-            allowedApps = ""; // means allow all apps
-            System.out.println("⚠️ No allowedApps provided → allowing all apps");
-        } else {
-            System.out.println("✅ Allowed Apps: " + allowedApps);
+            allowedApps = "";
         }
 
-        Long sessionId = sessionService.start(1L, allowedApps);
-
-        System.out.println("🚀 Session started with ID: " + sessionId);
+        // 🔥 FIX: no hardcoding
+        Long sessionId = sessionService.start(null, allowedApps);
 
         return "Session started. ID: " + sessionId;
     }
@@ -68,9 +65,6 @@ public class FacultyController {
         }
 
         sessionService.stop();
-
-        System.out.println("🛑 Session stopped");
-
         return "Session stopped";
     }
 
