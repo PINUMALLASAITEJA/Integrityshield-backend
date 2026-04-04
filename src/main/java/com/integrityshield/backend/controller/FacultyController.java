@@ -51,8 +51,8 @@ public class FacultyController {
             allowedApps = "";
         }
 
-        // 🔥 FIX: no hardcoding
-        Long sessionId = sessionService.start(null, allowedApps);
+        // 🔥 FIX: provide valid facultyId
+        Long sessionId = sessionService.start(1L, allowedApps);
 
         return "Session started. ID: " + sessionId;
     }
