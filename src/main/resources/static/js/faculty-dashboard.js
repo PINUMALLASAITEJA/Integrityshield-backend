@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    showHome(); // default view
+    showHome();
 
     updateSessionStatus(false);
     connectWebSocket();
@@ -15,6 +15,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let stompClient = null;
 let studentViolations = {};
+
+/* ---------------- SESSION CONTROL ---------------- */
+
+function startSession() {
+
+    fetch('/api/faculty/start-session?allowedApps=', {
+        method: 'POST',
+        headers: getAuthHeader()
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        updateSessionStatus(true);
+    })
+    .catch(() => alert("Failed to start session"));
+}
+
+function stopSession() {
+
+    fetch('/api/faculty/stop-session', {
+        method: 'POST',
+        headers: getAuthHeader()
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert(msg);
+        updateSessionStatus(false);
+    })
+    .catch(() => alert("Failed to stop session"));
+}
+
+function updateSessionStatus(active) {
+
+    const status = document.getElementById("sessionStatus");
+    if (!status) return;
+
+    status.innerText = active ? "Session Active" : "No Active Session";
+    status.style.color = active ? "green" : "red";
+}
 
 /* ---------------- VIEW SWITCH ---------------- */
 
@@ -69,7 +108,6 @@ function addStudent(roll) {
     `;
 
     li.style.color = "green";
-
     li.onclick = () => showStudentDetails(roll);
 
     document.getElementById("studentsList").appendChild(li);
@@ -92,7 +130,6 @@ function handleEscalation(alert) {
 
     if (li) {
         li.style.color = "red";
-
         li.querySelector(".count-badge").innerText =
             "violations: " + studentViolations[roll].count;
 
