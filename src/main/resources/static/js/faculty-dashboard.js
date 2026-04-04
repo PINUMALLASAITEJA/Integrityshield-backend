@@ -71,8 +71,8 @@ function showAccess() {
 
 function connectWebSocket() {
 
-	const socket = new WebSocket("wss://integrityshield-backend-2.onrender.com/ws");
-	stompClient = Stomp.over(socket);
+    const socket = new WebSocket("wss://integrityshield-backend-2.onrender.com/ws");
+    stompClient = Stomp.over(socket);
 
     stompClient.connect(
         { Authorization: "Bearer " + localStorage.getItem("token") },
@@ -169,6 +169,52 @@ function showStudentDetails(roll) {
 }
 
 /* ---------------- PERMISSIONS ---------------- */
+
+/* 🔥 ADD APP (FIXED) */
+function addAllowedApp() {
+
+    const input = document.getElementById("appInput");
+    const appName = input.value.trim();
+
+    if (!appName) {
+        alert("Enter app name");
+        return;
+    }
+
+    fetch('/api/faculty/allow-app', {
+        method: 'POST',
+        headers: getAuthHeader(),
+        body: appName
+    })
+    .then(() => {
+        input.value = "";
+        loadAllowedApps();
+    })
+    .catch(() => alert("Failed to add app"));
+}
+
+/* 🔥 ADD URL (FIXED) */
+function addAllowedUrl() {
+
+    const input = document.getElementById("urlInput");
+    const url = input.value.trim();
+
+    if (!url) {
+        alert("Enter URL");
+        return;
+    }
+
+    fetch('/api/faculty/allow-url', {
+        method: 'POST',
+        headers: getAuthHeader(),
+        body: url
+    })
+    .then(() => {
+        input.value = "";
+        loadAllowedUrls();
+    })
+    .catch(() => alert("Failed to add URL"));
+}
 
 function loadAllowedApps() {
 
