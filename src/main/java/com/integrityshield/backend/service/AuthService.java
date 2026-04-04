@@ -9,8 +9,6 @@ import com.integrityshield.backend.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class AuthService {
 
@@ -29,13 +27,13 @@ public class AuthService {
     public String register(UserRegisterRequest request) {
 
         if (userRepo.existsByUserIdentifier(request.getUserIdentifier())) {
-            return "User already exists";
+            throw new RuntimeException("User already exists");
         }
 
         User user = new User(
                 request.getUserIdentifier(),
                 passwordEncoder.encode(request.getPassword()),
-                request.getRole()
+                request.getRole() // should be FACULTY
         );
 
         userRepo.save(user);
@@ -45,23 +43,17 @@ public class AuthService {
 
     public String login(LoginRequest request) {
 
-        Optional<User> optionalUser =
-                userRepo.findByUserIdentifier(request.getUserIdentifier());
+        User user = userRepo.findByUserIdentifier(request.getUserIdentifier())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (optionalUser.isEmpty()) {
-            return "User not found";
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
         }
 
-        User user = optionalUser.get();
-
-        if (!passwordEncoder.matches(request.getPassword(),
-                                     user.getPassword())) {
-            return "Invalid credentials";
-        }
-
+        // 🔥 ALWAYS RETURN VALID JWT
         return jwtUtil.generateToken(
                 user.getUserIdentifier(),
-                user.getRole().name()
+                user.getRole().name() // FACULTY → becomes ROLE_FACULTY
         );
     }
 }

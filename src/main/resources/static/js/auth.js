@@ -3,11 +3,11 @@ function login() {
     const username = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    fetch('/api/student/login', {
+    fetch('/api/auth/login', {   // 🔥 FIXED
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            rollNumber: username,
+            userIdentifier: username,   // 🔥 FIXED
             password: password
         })
     })
@@ -15,17 +15,18 @@ function login() {
         if (!res.ok) {
             throw new Error("Invalid credentials");
         }
-        return res.json();
+        return res.text();   // backend returns token as plain string
     })
-    .then(data => {
+    .then(token => {
 
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", token);
         window.location.href = "faculty-dashboard.html";
     })
     .catch(() => {
         document.getElementById("error").innerText = "Invalid username or password";
     });
 }
+
 
 function register() {
 
@@ -38,7 +39,7 @@ function register() {
         body: JSON.stringify({
             userIdentifier: username,
             password: password,
-            role: "FACULTY"
+            role: "FACULTY"   // ✔ correct
         })
     })
     .then(res => res.text())
