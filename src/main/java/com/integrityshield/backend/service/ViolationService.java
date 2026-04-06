@@ -14,12 +14,9 @@ public class ViolationService {
 
     private final ViolationRepository repo;
     private final SessionStateService sessionService;
-    private final SimpMessagingTemplate messagingTemplate; // 🔥 NEW
+    private final SimpMessagingTemplate messagingTemplate;
 
-    // 🔥 track ongoing violations
     private final Map<String, Long> activeStartTime = new HashMap<>();
-
-    // 🔥 track counts
     private final Map<String, Integer> violationCount = new HashMap<>();
 
     public ViolationService(ViolationRepository repo,
@@ -38,6 +35,11 @@ public class ViolationService {
         var session = sessionService.getActiveSession();
         if (session == null) return;
 
+        // 🔥 IGNORE CMD
+        if (appName != null && appName.toLowerCase().contains("cmd")) {
+            return;
+        }
+
         String key = studentRoll + "_" + appName.toLowerCase();
 
         if (ongoing) {
@@ -52,8 +54,19 @@ public class ViolationService {
 
         activeStartTime.remove(key);
 
-        violationCount.put(studentRoll,
-                violationCount.getOrDefault(studentRoll, 0) + 1);
+        int count = violationCount.getOrDefault(studentRoll, 0) + 1;
+        violationCount.put(studentRoll, count);
+
+        // 🔥 FIRST VIOLATION → WARNING ONLY (no dashboard send)
+        if (count == 1) {
+            messagingTemplate.convertAndSend(
+                    "/topic/student-warning/" + studentRoll,
+                    "Please focus on work"
+            );
+            return;
+        }
+
+        // 🔥 SECOND VIOLATION → SEND TO FACULTY
 
         Violation v = new Violation();
         v.setSessionId(session.getId());
@@ -64,15 +77,8 @@ public class ViolationService {
 
         repo.save(v);
 
-        // 🔥 SEND TO DASHBOARD
         messagingTemplate.convertAndSend("/topic/faculty-alerts", v);
-
-        System.out.println("⚠️ " + studentRoll +
-                " used " + appName +
-                " for " + actualDuration + " sec");
     }
-
-    /* ================= LIVE ALERTS ================= */
 
     public List<Violation> getCurrentSessionAlerts() {
 
@@ -81,8 +87,6 @@ public class ViolationService {
 
         return repo.findAll();
     }
-
-    /* ================= REPORT ================= */
 
     public List<StudentFlagDTO> getSessionReport(Long sessionId) {
 
@@ -104,15 +108,5 @@ public class ViolationService {
         }
 
         return result;
-    }
-
-    /* ================= JOIN ================= */
-
-    public void studentJoinedBroadcast(String roll) {
-
-        System.out.println("🟢 Student joined: " + roll);
-
-        // 🔥 FIX: SEND TO DASHBOARD
-        messagingTemplate.convertAndSend("/topic/student-join", roll);
     }
 }

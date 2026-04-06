@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     showHome();
-
     updateSessionStatus(false);
     connectWebSocket();
     loadAllowedApps();
@@ -25,10 +24,8 @@ function startSession() {
     })
     .then(res => res.text())
     .then(msg => {
-        alert(msg);
         updateSessionStatus(true);
-    })
-    .catch(() => alert("Failed"));
+    });
 }
 
 function stopSession() {
@@ -37,8 +34,7 @@ function stopSession() {
         headers: getAuthHeader()
     })
     .then(res => res.text())
-    .then(msg => {
-        alert(msg);
+    .then(() => {
         updateSessionStatus(false);
     });
 }
@@ -47,10 +43,7 @@ function updateSessionStatus(active) {
 
     const badge = document.getElementById("sessionStatus");
 
-    if (!badge) return;
-
     badge.innerText = active ? "Active" : "Inactive";
-
     badge.classList.remove("active", "inactive");
     badge.classList.add(active ? "active" : "inactive");
 }
@@ -85,8 +78,34 @@ function connectWebSocket() {
             stompClient.subscribe('/topic/student-join', msg =>
                 addStudent(msg.body)
             );
+
+            // 🔥 SESSION END LISTENER
+            stompClient.subscribe('/topic/session-end', () =>
+                handleSessionEnd()
+            );
         }
     );
+}
+
+/* ---------------- SESSION END FIX ---------------- */
+
+function handleSessionEnd() {
+
+    const list = document.getElementById("studentsList");
+    list.innerHTML = "";
+    studentViolations = {};
+
+    showSessionMessage("Session Ended");
+
+    setTimeout(() => {
+        document.getElementById("sessionMsg").style.display = "none";
+    }, 3000);
+}
+
+function showSessionMessage(text) {
+    const msg = document.getElementById("sessionMsg");
+    msg.innerText = text;
+    msg.style.display = "block";
 }
 
 /* ---------------- STUDENTS ---------------- */
@@ -106,7 +125,7 @@ function addStudent(roll) {
     `;
 
     li.style.color = "green";
-    li.onclick = () => showStudentDetails(roll);
+    li.onclick = () => showOverlay(roll);
 
     document.getElementById("studentsList").appendChild(li);
 }
@@ -145,143 +164,34 @@ function sortStudents() {
     items.sort((a, b) => {
         const ra = a.id.replace("student-", "");
         const rb = b.id.replace("student-", "");
-
         return studentViolations[rb].count - studentViolations[ra].count;
     });
 
     items.forEach(i => list.appendChild(i));
 }
 
-/* ---------------- DETAILS ---------------- */
+/* ---------------- OVERLAY (NEW) ---------------- */
 
-function showStudentDetails(roll) {
+function showOverlay(roll) {
+
+    const overlay = document.getElementById("overlay");
+    const content = document.getElementById("overlayContent");
 
     const data = studentViolations[roll];
     if (!data) return;
 
-    let text = `Violations:\n\n`;
+    let html = `<h3>${roll}</h3>`;
 
     data.history.forEach((v, i) => {
-        text += `${i + 1}. ${v}\n`;
+        html += `<p>${i + 1}. ${v}</p>`;
     });
 
-    alert(text);
+    content.innerHTML = html;
+    overlay.style.display = "flex";
 }
 
-/* ---------------- PERMISSIONS ---------------- */
-
-/* 🔥 ADD APP (FIXED) */
-function addAllowedApp() {
-
-    const input = document.getElementById("appInput");
-    const appName = input.value.trim();
-
-    if (!appName) {
-        alert("Enter app name");
-        return;
-    }
-
-    fetch('/api/faculty/allow-app', {
-        method: 'POST',
-        headers: getAuthHeader(),
-        body: appName
-    })
-    .then(() => {
-        input.value = "";
-        loadAllowedApps();
-    })
-    .catch(() => alert("Failed to add app"));
-}
-
-/* 🔥 ADD URL (FIXED) */
-function addAllowedUrl() {
-
-    const input = document.getElementById("urlInput");
-    const url = input.value.trim();
-
-    if (!url) {
-        alert("Enter URL");
-        return;
-    }
-
-    fetch('/api/faculty/allow-url', {
-        method: 'POST',
-        headers: getAuthHeader(),
-        body: url
-    })
-    .then(() => {
-        input.value = "";
-        loadAllowedUrls();
-    })
-    .catch(() => alert("Failed to add URL"));
-}
-
-function loadAllowedApps() {
-
-    fetch('/api/faculty/allowed-apps', {
-        headers: getAuthHeader()
-    })
-    .then(res => res.ok ? res.json() : [])
-    .then(data => {
-
-        const list = document.getElementById("allowedAppsList");
-        list.innerHTML = "";
-
-        if (!Array.isArray(data)) return;
-
-        data.forEach(app => {
-
-            const li = document.createElement("li");
-
-            li.innerHTML = `
-                <span>${app}</span>
-                <button class="remove-btn" onclick="removeAllowedApp('${app}')">X</button>
-            `;
-
-            list.appendChild(li);
-        });
-    });
-}
-
-function removeAllowedApp(app) {
-    fetch(`/api/faculty/remove-app?appName=${app}`, {
-        method: 'DELETE',
-        headers: getAuthHeader()
-    }).then(loadAllowedApps);
-}
-
-function loadAllowedUrls() {
-
-    fetch('/api/faculty/allowed-urls', {
-        headers: getAuthHeader()
-    })
-    .then(res => res.ok ? res.json() : [])
-    .then(data => {
-
-        const list = document.getElementById("allowedUrlsList");
-        list.innerHTML = "";
-
-        if (!Array.isArray(data)) return;
-
-        data.forEach(url => {
-
-            const li = document.createElement("li");
-
-            li.innerHTML = `
-                <span>${url}</span>
-                <button class="remove-btn" onclick="removeAllowedUrl('${url}')">X</button>
-            `;
-
-            list.appendChild(li);
-        });
-    });
-}
-
-function removeAllowedUrl(url) {
-    fetch(`/api/faculty/remove-url?url=${url}`, {
-        method: 'DELETE',
-        headers: getAuthHeader()
-    }).then(loadAllowedUrls);
+function closeOverlay() {
+    document.getElementById("overlay").style.display = "none";
 }
 
 /* ---------------- HELPERS ---------------- */

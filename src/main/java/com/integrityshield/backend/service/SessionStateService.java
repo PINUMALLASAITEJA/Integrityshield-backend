@@ -2,6 +2,7 @@ package com.integrityshield.backend.service;
 
 import com.integrityshield.backend.entity.Session;
 import com.integrityshield.backend.repository.SessionRepository;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -14,13 +15,16 @@ public class SessionStateService {
 
     private final SessionRepository sessionRepo;
     private final PermissionService permissionService;
+    private final SimpMessagingTemplate messagingTemplate; // 🔥 NEW
 
     private final Set<String> activeStudents = ConcurrentHashMap.newKeySet();
 
     public SessionStateService(SessionRepository sessionRepo,
-                               PermissionService permissionService) {
+                               PermissionService permissionService,
+                               SimpMessagingTemplate messagingTemplate) {
         this.sessionRepo = sessionRepo;
         this.permissionService = permissionService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public Long start(Long facultyId, String allowedApps) {
@@ -32,7 +36,6 @@ public class SessionStateService {
                     sessionRepo.save(existing);
                 });
 
-        // 🔥 RESET APPS EVERY SESSION
         permissionService.clearAllApps();
 
         Session session = new Session();
@@ -41,15 +44,11 @@ public class SessionStateService {
         session.setStatus("ACTIVE");
 
         List<String> apps = permissionService.getAllowedApps();
-        String formatted = String.join(",", apps);
-
-        session.setAllowedApps(formatted);
+        session.setAllowedApps(String.join(",", apps));
 
         sessionRepo.save(session);
 
         activeStudents.clear();
-
-        System.out.println("🚀 New session started: " + session.getId());
 
         return session.getId();
     }
@@ -65,6 +64,9 @@ public class SessionStateService {
         });
 
         activeStudents.clear();
+
+        // 🔥 notify frontend to clear UI
+        messagingTemplate.convertAndSend("/topic/session-end", "ENDED");
     }
 
     public Session getActiveSession() {
@@ -80,7 +82,7 @@ public class SessionStateService {
 
         if (!activeStudents.contains(roll)) {
             activeStudents.add(roll);
-            System.out.println("🟢 Student joined: " + roll);
+            messagingTemplate.convertAndSend("/topic/student-join", roll); // 🔥 live update
         }
     }
 

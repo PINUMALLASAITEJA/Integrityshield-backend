@@ -4,7 +4,7 @@
     <title>IntegrityShield - Faculty Dashboard</title>
 
     <link rel="stylesheet" href="css/theme.css">
-    <link rel="stylesheet" href="css/faculty-dashboard.css?v=10">
+    <link rel="stylesheet" href="css/faculty-dashboard.css?v=11">
 
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
@@ -28,6 +28,9 @@
 </div>
 
 <div class="container">
+
+    <!-- SESSION MESSAGE -->
+    <div id="sessionMsg" class="session-msg" style="display:none;"></div>
 
     <!-- HOME SECTION -->
     <div id="homeSection">
@@ -71,7 +74,15 @@
 
 </div>
 
-<script src="js/faculty-dashboard.js?v=11"></script>
+<!-- OVERLAY (NEW) -->
+<div id="overlay" class="overlay">
+    <div class="overlay-box">
+        <button onclick="closeOverlay()" style="float:right;">X</button>
+        <div id="overlayContent"></div>
+    </div>
+</div>
+
+<script src="js/faculty-dashboard.js?v=12"></script>
 
 </body>
 </html>
