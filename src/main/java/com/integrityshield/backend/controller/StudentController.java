@@ -63,7 +63,7 @@ public class StudentController {
         }
 
         sessionService.studentJoined(roll);
-        violationService.studentJoinedBroadcast(roll);
+        sessionService.studentJoined(roll);
 
         return ResponseEntity.ok("Session active");
     }
