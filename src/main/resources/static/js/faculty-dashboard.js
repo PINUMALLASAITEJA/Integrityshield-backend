@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
     showHome();
     updateSessionStatus(false);
     connectWebSocket();
+
+    // ✅ FIX: now these functions exist
     loadAllowedApps();
     loadAllowedUrls();
 });
@@ -22,10 +24,7 @@ function startSession() {
         method: 'POST',
         headers: getAuthHeader()
     })
-    .then(res => res.text())
-    .then(msg => {
-        updateSessionStatus(true);
-    });
+    .then(() => updateSessionStatus(true));
 }
 
 function stopSession() {
@@ -33,16 +32,11 @@ function stopSession() {
         method: 'POST',
         headers: getAuthHeader()
     })
-    .then(res => res.text())
-    .then(() => {
-        updateSessionStatus(false);
-    });
+    .then(() => updateSessionStatus(false));
 }
 
 function updateSessionStatus(active) {
-
     const badge = document.getElementById("sessionStatus");
-
     badge.innerText = active ? "Active" : "Inactive";
     badge.classList.remove("active", "inactive");
     badge.classList.add(active ? "active" : "inactive");
@@ -79,7 +73,6 @@ function connectWebSocket() {
                 addStudent(msg.body)
             );
 
-            // 🔥 SESSION END LISTENER
             stompClient.subscribe('/topic/session-end', () =>
                 handleSessionEnd()
             );
@@ -87,12 +80,11 @@ function connectWebSocket() {
     );
 }
 
-/* ---------------- SESSION END FIX ---------------- */
+/* ---------------- SESSION END ---------------- */
 
 function handleSessionEnd() {
 
-    const list = document.getElementById("studentsList");
-    list.innerHTML = "";
+    document.getElementById("studentsList").innerHTML = "";
     studentViolations = {};
 
     showSessionMessage("Session Ended");
@@ -170,7 +162,7 @@ function sortStudents() {
     items.forEach(i => list.appendChild(i));
 }
 
-/* ---------------- OVERLAY (NEW) ---------------- */
+/* ---------------- OVERLAY ---------------- */
 
 function showOverlay(roll) {
 
@@ -192,6 +184,114 @@ function showOverlay(roll) {
 
 function closeOverlay() {
     document.getElementById("overlay").style.display = "none";
+}
+
+/* ---------------- ALLOWED APPS ---------------- */
+
+function loadAllowedApps() {
+
+    fetch('/api/faculty/allowed-apps', {
+        headers: getAuthHeader()
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        const list = document.getElementById("allowedAppsList");
+        list.innerHTML = "";
+
+        data.forEach(app => {
+
+            const li = document.createElement("li");
+
+            li.innerHTML = `
+                ${app}
+                <button onclick="removeAllowedApp('${app}')">X</button>
+            `;
+
+            list.appendChild(li);
+        });
+    });
+}
+
+function addAllowedApp() {
+
+    const input = document.getElementById("appInput");
+    const app = input.value.trim();
+
+    if (!app) return;
+
+    fetch('/api/faculty/allow-app', {
+        method: 'POST',
+        headers: getAuthHeader(),
+        body: app
+    })
+    .then(() => {
+        input.value = "";
+        loadAllowedApps();
+    });
+}
+
+function removeAllowedApp(app) {
+
+    fetch(`/api/faculty/remove-app?appName=${app}`, {
+        method: 'DELETE',
+        headers: getAuthHeader()
+    })
+    .then(() => loadAllowedApps());
+}
+
+/* ---------------- ALLOWED URLS ---------------- */
+
+function loadAllowedUrls() {
+
+    fetch('/api/faculty/allowed-urls', {
+        headers: getAuthHeader()
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        const list = document.getElementById("allowedUrlsList");
+        list.innerHTML = "";
+
+        data.forEach(url => {
+
+            const li = document.createElement("li");
+
+            li.innerHTML = `
+                ${url}
+                <button onclick="removeAllowedUrl('${url}')">X</button>
+            `;
+
+            list.appendChild(li);
+        });
+    });
+}
+
+function addAllowedUrl() {
+
+    const input = document.getElementById("urlInput");
+    const url = input.value.trim();
+
+    if (!url) return;
+
+    fetch('/api/faculty/allow-url', {
+        method: 'POST',
+        headers: getAuthHeader(),
+        body: url
+    })
+    .then(() => {
+        input.value = "";
+        loadAllowedUrls();
+    });
+}
+
+function removeAllowedUrl(url) {
+
+    fetch(`/api/faculty/remove-url?url=${url}`, {
+        method: 'DELETE',
+        headers: getAuthHeader()
+    })
+    .then(() => loadAllowedUrls());
 }
 
 /* ---------------- HELPERS ---------------- */
