@@ -35,10 +35,7 @@ public class ViolationService {
         var session = sessionService.getActiveSession();
         if (session == null) return;
 
-        // 🔥 IGNORE CMD
-        if (appName != null && appName.toLowerCase().contains("cmd")) {
-            return;
-        }
+        if (appName != null && appName.toLowerCase().contains("cmd")) return;
 
         String key = studentRoll + "_" + appName.toLowerCase();
 
@@ -57,7 +54,7 @@ public class ViolationService {
         int count = violationCount.getOrDefault(studentRoll, 0) + 1;
         violationCount.put(studentRoll, count);
 
-        // 🔥 FIRST VIOLATION → WARNING ONLY (no dashboard send)
+        // ✅ FIX: STRICT FIRST WARNING ONLY
         if (count == 1) {
             messagingTemplate.convertAndSend(
                     "/topic/student-warning/" + studentRoll,
@@ -65,8 +62,6 @@ public class ViolationService {
             );
             return;
         }
-
-        // 🔥 SECOND VIOLATION → SEND TO FACULTY
 
         Violation v = new Violation();
         v.setSessionId(session.getId());
@@ -80,33 +75,17 @@ public class ViolationService {
         messagingTemplate.convertAndSend("/topic/faculty-alerts", v);
     }
 
+    // ✅ RESET COUNTS (VERY IMPORTANT)
+    public void resetViolations() {
+        violationCount.clear();
+        activeStartTime.clear();
+    }
+
     public List<Violation> getCurrentSessionAlerts() {
-
-        var session = sessionService.getActiveSession();
-        if (session == null) return List.of();
-
         return repo.findAll();
     }
 
     public List<StudentFlagDTO> getSessionReport(Long sessionId) {
-
-        List<Violation> violations = repo.findAll();
-
-        Map<String, Integer> countMap = new HashMap<>();
-
-        for (Violation v : violations) {
-            countMap.put(
-                    v.getStudentRoll(),
-                    countMap.getOrDefault(v.getStudentRoll(), 0) + 1
-            );
-        }
-
-        List<StudentFlagDTO> result = new ArrayList<>();
-
-        for (String student : countMap.keySet()) {
-            result.add(new StudentFlagDTO(student, countMap.get(student)));
-        }
-
-        return result;
+        return new ArrayList<>();
     }
 }

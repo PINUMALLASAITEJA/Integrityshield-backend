@@ -3,7 +3,7 @@ package com.integrityshield.backend.controller;
 import com.integrityshield.backend.security.JwtUtil;
 import com.integrityshield.backend.service.SessionStateService;
 import com.integrityshield.backend.service.ViolationService;
-import com.integrityshield.backend.service.PermissionService; // 🔥 NEW
+import com.integrityshield.backend.service.PermissionService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +21,7 @@ public class StudentController {
     private final SessionStateService sessionService;
     private final ViolationService violationService;
     private final JwtUtil jwtUtil;
-    private final PermissionService permissionService; // 🔥 NEW
+    private final PermissionService permissionService;
 
     public StudentController(SessionStateService sessionService,
                              ViolationService violationService,
@@ -62,7 +62,7 @@ public class StudentController {
             return ResponseEntity.status(403).body("Session not active");
         }
 
-        sessionService.studentJoined(roll);
+        // ✅ FIX: only once
         sessionService.studentJoined(roll);
 
         return ResponseEntity.ok("Session active");
@@ -72,7 +72,7 @@ public class StudentController {
 
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/session")
-    public ResponseEntity<?> getSession() {
+    public ResponseEntity<?> getSession(Authentication auth) {
 
         var session = sessionService.getActiveSession();
 
@@ -80,7 +80,11 @@ public class StudentController {
             return ResponseEntity.status(403).body("No active session");
         }
 
-        // 🔥 LIVE ALLOWED APPS
+        String roll = auth.getName();
+
+        // ✅ FIX: ensure re-join every time
+        sessionService.studentJoined(roll);
+
         List<String> apps = permissionService.getAllowedApps();
 
         return ResponseEntity.ok(

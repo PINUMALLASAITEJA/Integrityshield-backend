@@ -15,16 +15,21 @@ public class SessionStateService {
 
     private final SessionRepository sessionRepo;
     private final PermissionService permissionService;
-    private final SimpMessagingTemplate messagingTemplate; // 🔥 NEW
+    private final SimpMessagingTemplate messagingTemplate;
+
+    // 🔥 ADD THIS
+    private final ViolationService violationService;
 
     private final Set<String> activeStudents = ConcurrentHashMap.newKeySet();
 
     public SessionStateService(SessionRepository sessionRepo,
                                PermissionService permissionService,
-                               SimpMessagingTemplate messagingTemplate) {
+                               SimpMessagingTemplate messagingTemplate,
+                               ViolationService violationService) { // 🔥 ADD
         this.sessionRepo = sessionRepo;
         this.permissionService = permissionService;
         this.messagingTemplate = messagingTemplate;
+        this.violationService = violationService; // 🔥 ADD
     }
 
     public Long start(Long facultyId, String allowedApps) {
@@ -43,12 +48,13 @@ public class SessionStateService {
         session.setStartTime(LocalDateTime.now());
         session.setStatus("ACTIVE");
 
-        List<String> apps = permissionService.getAllowedApps();
-        session.setAllowedApps(String.join(",", apps));
-
         sessionRepo.save(session);
 
+        // ✅ RESET STUDENTS
         activeStudents.clear();
+
+        // 🔥 CRITICAL FIX (YOU MISSED THIS)
+        violationService.resetViolations();
 
         return session.getId();
     }
@@ -65,7 +71,6 @@ public class SessionStateService {
 
         activeStudents.clear();
 
-        // 🔥 notify frontend to clear UI
         messagingTemplate.convertAndSend("/topic/session-end", "ENDED");
     }
 
@@ -80,9 +85,8 @@ public class SessionStateService {
 
     public void studentJoined(String roll) {
 
-        if (!activeStudents.contains(roll)) {
-            activeStudents.add(roll);
-            messagingTemplate.convertAndSend("/topic/student-join", roll); // 🔥 live update
+        if (activeStudents.add(roll)) {
+            messagingTemplate.convertAndSend("/topic/student-join", roll);
         }
     }
 

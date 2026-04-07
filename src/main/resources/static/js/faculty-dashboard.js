@@ -9,13 +9,13 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSessionStatus(false);
     connectWebSocket();
 
-    // ✅ FIX: now these functions exist
     loadAllowedApps();
     loadAllowedUrls();
 });
 
 let stompClient = null;
 let studentViolations = {};
+let socketConnected = false;
 
 /* ---------------- SESSION ---------------- */
 
@@ -24,7 +24,14 @@ function startSession() {
         method: 'POST',
         headers: getAuthHeader()
     })
-    .then(() => updateSessionStatus(true));
+    .then(() => {
+        updateSessionStatus(true);
+
+        // 🔥 reload permissions after session start
+        loadAllowedApps();
+        loadAllowedUrls();
+    })
+    .catch(err => console.error("Start session failed:", err));
 }
 
 function stopSession() {
@@ -32,7 +39,8 @@ function stopSession() {
         method: 'POST',
         headers: getAuthHeader()
     })
-    .then(() => updateSessionStatus(false));
+    .then(() => updateSessionStatus(false))
+    .catch(err => console.error("Stop session failed:", err));
 }
 
 function updateSessionStatus(active) {
@@ -58,12 +66,17 @@ function showAccess() {
 
 function connectWebSocket() {
 
+    if (socketConnected) return; // ✅ prevent duplicate connections
+
     const socket = new WebSocket("wss://integrityshield-backend-2.onrender.com/ws");
     stompClient = Stomp.over(socket);
 
     stompClient.connect(
         { Authorization: "Bearer " + localStorage.getItem("token") },
+
         () => {
+            socketConnected = true;
+            console.log("✅ WebSocket Connected");
 
             stompClient.subscribe('/topic/faculty-alerts', msg =>
                 handleEscalation(JSON.parse(msg.body))
@@ -76,6 +89,14 @@ function connectWebSocket() {
             stompClient.subscribe('/topic/session-end', () =>
                 handleSessionEnd()
             );
+        },
+
+        (error) => {
+            console.error("❌ WebSocket error:", error);
+            socketConnected = false;
+
+            // 🔥 auto reconnect
+            setTimeout(connectWebSocket, 3000);
         }
     );
 }
@@ -201,16 +222,19 @@ function loadAllowedApps() {
 
         data.forEach(app => {
 
+            const safeApp = encodeURIComponent(app);
+
             const li = document.createElement("li");
 
             li.innerHTML = `
                 ${app}
-                <button onclick="removeAllowedApp('${app}')">X</button>
+                <button onclick="removeAllowedApp('${safeApp}')">X</button>
             `;
 
             list.appendChild(li);
         });
-    });
+    })
+    .catch(err => console.error("Load apps error:", err));
 }
 
 function addAllowedApp() {
@@ -228,16 +252,18 @@ function addAllowedApp() {
     .then(() => {
         input.value = "";
         loadAllowedApps();
-    });
+    })
+    .catch(err => console.error("Add app error:", err));
 }
 
 function removeAllowedApp(app) {
 
-    fetch(`/api/faculty/remove-app?appName=${app}`, {
+    fetch(`/api/faculty/remove-app?appName=${decodeURIComponent(app)}`, {
         method: 'DELETE',
         headers: getAuthHeader()
     })
-    .then(() => loadAllowedApps());
+    .then(() => loadAllowedApps())
+    .catch(err => console.error("Remove app error:", err));
 }
 
 /* ---------------- ALLOWED URLS ---------------- */
@@ -255,16 +281,19 @@ function loadAllowedUrls() {
 
         data.forEach(url => {
 
+            const safeUrl = encodeURIComponent(url);
+
             const li = document.createElement("li");
 
             li.innerHTML = `
                 ${url}
-                <button onclick="removeAllowedUrl('${url}')">X</button>
+                <button onclick="removeAllowedUrl('${safeUrl}')">X</button>
             `;
 
             list.appendChild(li);
         });
-    });
+    })
+    .catch(err => console.error("Load URLs error:", err));
 }
 
 function addAllowedUrl() {
@@ -282,16 +311,18 @@ function addAllowedUrl() {
     .then(() => {
         input.value = "";
         loadAllowedUrls();
-    });
+    })
+    .catch(err => console.error("Add URL error:", err));
 }
 
 function removeAllowedUrl(url) {
 
-    fetch(`/api/faculty/remove-url?url=${url}`, {
+    fetch(`/api/faculty/remove-url?url=${decodeURIComponent(url)}`, {
         method: 'DELETE',
         headers: getAuthHeader()
     })
-    .then(() => loadAllowedUrls());
+    .then(() => loadAllowedUrls())
+    .catch(err => console.error("Remove URL error:", err));
 }
 
 /* ---------------- HELPERS ---------------- */
