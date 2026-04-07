@@ -1,9 +1,12 @@
 package com.integrityshield.backend.controller;
 
-import com.integrityshield.backend.security.JwtUtil;
+import com.integrityshield.backend.dto.LoginRequest;
+import com.integrityshield.backend.dto.UserRegisterRequest;
+import com.integrityshield.backend.entity.Role; // ✅ FIX (IMPORTANT)
 import com.integrityshield.backend.service.SessionStateService;
 import com.integrityshield.backend.service.ViolationService;
 import com.integrityshield.backend.service.PermissionService;
+import com.integrityshield.backend.service.AuthService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,17 +23,40 @@ public class StudentController {
 
     private final SessionStateService sessionService;
     private final ViolationService violationService;
-    private final JwtUtil jwtUtil;
     private final PermissionService permissionService;
+    private final AuthService authService;
 
     public StudentController(SessionStateService sessionService,
                              ViolationService violationService,
-                             JwtUtil jwtUtil,
-                             PermissionService permissionService) {
+                             PermissionService permissionService,
+                             AuthService authService) {
+
         this.sessionService = sessionService;
         this.violationService = violationService;
-        this.jwtUtil = jwtUtil;
         this.permissionService = permissionService;
+        this.authService = authService;
+    }
+
+    /* ================= REGISTER ================= */
+
+    @PostMapping("/register")
+    public String register(@RequestBody Map<String, String> req) {
+
+        String roll = req.get("rollNumber");
+        String password = req.get("password");
+
+        if (roll == null || password == null) {
+            throw new RuntimeException("Invalid data");
+        }
+
+        UserRegisterRequest request = new UserRegisterRequest();
+        request.setUserIdentifier(roll);
+        request.setPassword(password);
+
+        // ✅ FIXED ROLE USAGE
+        request.setRole(Role.STUDENT);
+
+        return authService.register(request);
     }
 
     /* ================= LOGIN ================= */
@@ -42,10 +68,14 @@ public class StudentController {
         String password = req.get("password");
 
         if (roll == null || password == null) {
-            throw new RuntimeException("Invalid credentials");
+            throw new RuntimeException("Invalid data");
         }
 
-        String token = jwtUtil.generateToken(roll, "STUDENT");
+        LoginRequest request = new LoginRequest();
+        request.setUserIdentifier(roll);
+        request.setPassword(password);
+
+        String token = authService.login(request);
 
         return Map.of("token", token);
     }
@@ -62,13 +92,12 @@ public class StudentController {
             return ResponseEntity.status(403).body("Session not active");
         }
 
-        // ✅ FIX: only once
         sessionService.studentJoined(roll);
 
         return ResponseEntity.ok("Session active");
     }
 
-    /* ================= FETCH SESSION ================= */
+    /* ================= SESSION ================= */
 
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/session")
@@ -82,7 +111,6 @@ public class StudentController {
 
         String roll = auth.getName();
 
-        // ✅ FIX: ensure re-join every time
         sessionService.studentJoined(roll);
 
         List<String> apps = permissionService.getAllowedApps();
@@ -95,7 +123,7 @@ public class StudentController {
         );
     }
 
-    /* ================= REPORT VIOLATION ================= */
+    /* ================= VIOLATION ================= */
 
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/violation")

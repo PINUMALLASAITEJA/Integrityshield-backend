@@ -24,16 +24,27 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
+    /* ================= REGISTER ================= */
+
     public String register(UserRegisterRequest request) {
+
+        if (request.getUserIdentifier() == null || request.getPassword() == null) {
+            throw new RuntimeException("Invalid input");
+        }
 
         if (userRepo.existsByUserIdentifier(request.getUserIdentifier())) {
             throw new RuntimeException("User already exists");
         }
 
+        // 🔥 ROLE MUST COME FROM CONTROLLER (SAFE CONTROL)
+        if (request.getRole() == null) {
+            throw new RuntimeException("Role is required");
+        }
+
         User user = new User(
                 request.getUserIdentifier(),
                 passwordEncoder.encode(request.getPassword()),
-                request.getRole() // should be FACULTY
+                request.getRole() // ✅ FIXED (NO HARDCODE)
         );
 
         userRepo.save(user);
@@ -41,7 +52,13 @@ public class AuthService {
         return "User registered successfully";
     }
 
+    /* ================= LOGIN ================= */
+
     public String login(LoginRequest request) {
+
+        if (request.getUserIdentifier() == null || request.getPassword() == null) {
+            throw new RuntimeException("Invalid input");
+        }
 
         User user = userRepo.findByUserIdentifier(request.getUserIdentifier())
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -50,10 +67,10 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // 🔥 ALWAYS RETURN VALID JWT
+        // 🔥 ROLE AUTO USED FROM DB
         return jwtUtil.generateToken(
                 user.getUserIdentifier(),
-                user.getRole().name() // FACULTY → becomes ROLE_FACULTY
+                user.getRole().name()
         );
     }
 }
