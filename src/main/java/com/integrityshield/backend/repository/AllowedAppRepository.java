@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface AllowedAppRepository extends JpaRepository<AllowedApp, Long> {
 
-    Optional<AllowedApp> findByAppName(String appName);
+    Optional<AllowedApp> findByAppNameIgnoreCase(String appName);
 
-    void deleteByAppName(String appName);
+    void deleteByAppNameIgnoreCase(String appName);
 }
