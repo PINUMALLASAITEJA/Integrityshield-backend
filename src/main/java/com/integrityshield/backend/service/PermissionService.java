@@ -44,7 +44,7 @@ public class PermissionService {
 
         appName = clean(appName);
 
-        appRepo.deleteByAppNameIgnoreCase(appName);
+        appRepo.deleteAppIgnoreCase(appName);
     }
 
     public void clearAllApps() {
