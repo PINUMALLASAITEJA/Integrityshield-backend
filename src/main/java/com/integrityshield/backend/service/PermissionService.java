@@ -25,9 +25,9 @@ public class PermissionService {
 
     public void addAllowedApp(String appName) {
 
-        appName = appName.replace("\"","").trim();
+        appName = clean(appName);
 
-        if (appRepo.findByAppName(appName).isEmpty()) {
+        if (appRepo.findByAppNameIgnoreCase(appName).isEmpty()) {
             appRepo.save(new AllowedApp(appName));
         }
     }
@@ -42,11 +42,11 @@ public class PermissionService {
 
     public void removeAllowedApp(String appName) {
 
-        appName = appName.replace("\"","").trim();
-        appRepo.deleteByAppName(appName);
+        appName = clean(appName);
+
+        appRepo.deleteByAppNameIgnoreCase(appName);
     }
 
-    // 🔥 NEW: CLEAR ALL APPS
     public void clearAllApps() {
         appRepo.deleteAll();
     }
@@ -55,7 +55,7 @@ public class PermissionService {
 
     public void addAllowedUrl(String url) {
 
-        url = url.replace("\"","").trim();
+        url = clean(url);
 
         if (urlRepo.findByUrl(url).isEmpty()) {
             urlRepo.save(new AllowedUrl(url));
@@ -72,7 +72,17 @@ public class PermissionService {
 
     public void removeAllowedUrl(String url) {
 
-        url = url.replace("\"","").trim();
+        url = clean(url);
+
         urlRepo.deleteByUrl(url);
+    }
+
+    /* ================= COMMON CLEANER ================= */
+
+    private String clean(String input) {
+        return input
+                .replace("\"", "")
+                .trim()
+                .toLowerCase();
     }
 }

@@ -60,7 +60,8 @@ public class SecurityConfig {
             	    .requestMatchers("/api/auth/**").permitAll()
             	    .requestMatchers("/api/student/login").permitAll()
 
-            	    // 🔥 FIX
+            	    // 🔥 FIX HERE
+            	    .requestMatchers(HttpMethod.DELETE, "/api/faculty/**").hasRole("FACULTY")
             	    .requestMatchers("/api/faculty/**").hasRole("FACULTY")
 
             	    .requestMatchers("/api/student/**").authenticated()
