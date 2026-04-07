@@ -60,9 +60,10 @@ public class SecurityConfig {
             	    .requestMatchers("/api/auth/**").permitAll()
             	    .requestMatchers("/api/student/login").permitAll()
 
-            	    // 🔥 FIX HERE
+            	    // 🔥 CRITICAL FIX (EXPLICIT METHOD MATCHING)
+            	    .requestMatchers(HttpMethod.POST, "/api/faculty/**").hasRole("FACULTY")
+            	    .requestMatchers(HttpMethod.GET, "/api/faculty/**").hasRole("FACULTY")
             	    .requestMatchers(HttpMethod.DELETE, "/api/faculty/**").hasRole("FACULTY")
-            	    .requestMatchers("/api/faculty/**").hasRole("FACULTY")
 
             	    .requestMatchers("/api/student/**").authenticated()
 
