@@ -17,19 +17,15 @@ public class SessionStateService {
     private final PermissionService permissionService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    // 🔥 ADD THIS
-    private final ViolationService violationService;
-
     private final Set<String> activeStudents = ConcurrentHashMap.newKeySet();
 
     public SessionStateService(SessionRepository sessionRepo,
                                PermissionService permissionService,
-                               SimpMessagingTemplate messagingTemplate,
-                               ViolationService violationService) { // 🔥 ADD
+                               SimpMessagingTemplate messagingTemplate) {
+
         this.sessionRepo = sessionRepo;
         this.permissionService = permissionService;
         this.messagingTemplate = messagingTemplate;
-        this.violationService = violationService; // 🔥 ADD
     }
 
     public Long start(Long facultyId, String allowedApps) {
@@ -52,9 +48,6 @@ public class SessionStateService {
 
         // ✅ RESET STUDENTS
         activeStudents.clear();
-
-        // 🔥 CRITICAL FIX (YOU MISSED THIS)
-        violationService.resetViolations();
 
         return session.getId();
     }

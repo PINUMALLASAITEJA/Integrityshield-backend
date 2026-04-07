@@ -54,7 +54,7 @@ public class ViolationService {
         int count = violationCount.getOrDefault(studentRoll, 0) + 1;
         violationCount.put(studentRoll, count);
 
-        // ✅ FIX: STRICT FIRST WARNING ONLY
+        // ✅ FIRST WARNING ONLY
         if (count == 1) {
             messagingTemplate.convertAndSend(
                     "/topic/student-warning/" + studentRoll,
@@ -75,7 +75,7 @@ public class ViolationService {
         messagingTemplate.convertAndSend("/topic/faculty-alerts", v);
     }
 
-    // ✅ RESET COUNTS (VERY IMPORTANT)
+    // ✅ RESET (NOW CALLED FROM CONTROLLER)
     public void resetViolations() {
         violationCount.clear();
         activeStartTime.clear();
