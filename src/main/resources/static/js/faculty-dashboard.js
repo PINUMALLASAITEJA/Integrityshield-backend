@@ -22,12 +22,10 @@ let socketConnected = false;
 function startSession() {
     fetch('/api/faculty/start-session?allowedApps=', {
         method: 'POST',
-        headers: getAuthHeader()
+        headers: authHeaderWithJSON()
     })
     .then(() => {
         updateSessionStatus(true);
-
-        // 🔥 reload permissions after session start
         loadAllowedApps();
         loadAllowedUrls();
     })
@@ -37,7 +35,7 @@ function startSession() {
 function stopSession() {
     fetch('/api/faculty/stop-session', {
         method: 'POST',
-        headers: getAuthHeader()
+        headers: authHeaderWithJSON()
     })
     .then(() => updateSessionStatus(false))
     .catch(err => console.error("Stop session failed:", err));
@@ -66,17 +64,15 @@ function showAccess() {
 
 function connectWebSocket() {
 
-    if (socketConnected) return; // ✅ prevent duplicate connections
+    if (socketConnected) return;
 
     const socket = new WebSocket("wss://integrityshield-backend-2.onrender.com/ws");
     stompClient = Stomp.over(socket);
 
     stompClient.connect(
         { Authorization: "Bearer " + localStorage.getItem("token") },
-
         () => {
             socketConnected = true;
-            console.log("✅ WebSocket Connected");
 
             stompClient.subscribe('/topic/faculty-alerts', msg =>
                 handleEscalation(JSON.parse(msg.body))
@@ -90,12 +86,8 @@ function connectWebSocket() {
                 handleSessionEnd()
             );
         },
-
-        (error) => {
-            console.error("❌ WebSocket error:", error);
+        () => {
             socketConnected = false;
-
-            // 🔥 auto reconnect
             setTimeout(connectWebSocket, 3000);
         }
     );
@@ -104,21 +96,8 @@ function connectWebSocket() {
 /* ---------------- SESSION END ---------------- */
 
 function handleSessionEnd() {
-
     document.getElementById("studentsList").innerHTML = "";
     studentViolations = {};
-
-    showSessionMessage("Session Ended");
-
-    setTimeout(() => {
-        document.getElementById("sessionMsg").style.display = "none";
-    }, 3000);
-}
-
-function showSessionMessage(text) {
-    const msg = document.getElementById("sessionMsg");
-    msg.innerText = text;
-    msg.style.display = "block";
 }
 
 /* ---------------- STUDENTS ---------------- */
@@ -137,7 +116,6 @@ function addStudent(roll) {
         <span class="count-badge">violations: 0</span>
     `;
 
-    li.style.color = "green";
     li.onclick = () => showOverlay(roll);
 
     document.getElementById("studentsList").appendChild(li);
@@ -159,52 +137,9 @@ function handleEscalation(alert) {
     const li = document.getElementById("student-" + roll);
 
     if (li) {
-        li.style.color = "red";
         li.querySelector(".count-badge").innerText =
             "violations: " + studentViolations[roll].count;
-
-        sortStudents();
     }
-}
-
-/* ---------------- SORT ---------------- */
-
-function sortStudents() {
-
-    const list = document.getElementById("studentsList");
-    const items = Array.from(list.children);
-
-    items.sort((a, b) => {
-        const ra = a.id.replace("student-", "");
-        const rb = b.id.replace("student-", "");
-        return studentViolations[rb].count - studentViolations[ra].count;
-    });
-
-    items.forEach(i => list.appendChild(i));
-}
-
-/* ---------------- OVERLAY ---------------- */
-
-function showOverlay(roll) {
-
-    const overlay = document.getElementById("overlay");
-    const content = document.getElementById("overlayContent");
-
-    const data = studentViolations[roll];
-    if (!data) return;
-
-    let html = `<h3>${roll}</h3>`;
-
-    data.history.forEach((v, i) => {
-        html += `<p>${i + 1}. ${v}</p>`;
-    });
-
-    content.innerHTML = html;
-    overlay.style.display = "flex";
-}
-
-function closeOverlay() {
-    document.getElementById("overlay").style.display = "none";
 }
 
 /* ---------------- ALLOWED APPS ---------------- */
@@ -212,7 +147,7 @@ function closeOverlay() {
 function loadAllowedApps() {
 
     fetch('/api/faculty/allowed-apps', {
-        headers: getAuthHeader()
+        headers: authHeader()
     })
     .then(res => res.json())
     .then(data => {
@@ -222,19 +157,16 @@ function loadAllowedApps() {
 
         data.forEach(app => {
 
-            const safeApp = encodeURIComponent(app);
-
             const li = document.createElement("li");
 
             li.innerHTML = `
                 ${app}
-                <button onclick="removeAllowedApp('${safeApp}')">X</button>
+                <button onclick="removeAllowedApp('${encodeURIComponent(app)}')">X</button>
             `;
 
             list.appendChild(li);
         });
-    })
-    .catch(err => console.error("Load apps error:", err));
+    });
 }
 
 function addAllowedApp() {
@@ -246,88 +178,33 @@ function addAllowedApp() {
 
     fetch('/api/faculty/allow-app', {
         method: 'POST',
-        headers: getAuthHeader(),
+        headers: authHeaderWithJSON(),
         body: app
     })
     .then(() => {
         input.value = "";
         loadAllowedApps();
-    })
-    .catch(err => console.error("Add app error:", err));
+    });
 }
 
 function removeAllowedApp(app) {
 
     fetch(`/api/faculty/remove-app?appName=${decodeURIComponent(app)}`, {
         method: 'DELETE',
-        headers: getAuthHeader()
+        headers: authHeader() // 🔥 FIX (NO JSON HEADER)
     })
-    .then(() => loadAllowedApps())
-    .catch(err => console.error("Remove app error:", err));
-}
-
-/* ---------------- ALLOWED URLS ---------------- */
-
-function loadAllowedUrls() {
-
-    fetch('/api/faculty/allowed-urls', {
-        headers: getAuthHeader()
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        const list = document.getElementById("allowedUrlsList");
-        list.innerHTML = "";
-
-        data.forEach(url => {
-
-            const safeUrl = encodeURIComponent(url);
-
-            const li = document.createElement("li");
-
-            li.innerHTML = `
-                ${url}
-                <button onclick="removeAllowedUrl('${safeUrl}')">X</button>
-            `;
-
-            list.appendChild(li);
-        });
-    })
-    .catch(err => console.error("Load URLs error:", err));
-}
-
-function addAllowedUrl() {
-
-    const input = document.getElementById("urlInput");
-    const url = input.value.trim();
-
-    if (!url) return;
-
-    fetch('/api/faculty/allow-url', {
-        method: 'POST',
-        headers: getAuthHeader(),
-        body: url
-    })
-    .then(() => {
-        input.value = "";
-        loadAllowedUrls();
-    })
-    .catch(err => console.error("Add URL error:", err));
-}
-
-function removeAllowedUrl(url) {
-
-    fetch(`/api/faculty/remove-url?url=${decodeURIComponent(url)}`, {
-        method: 'DELETE',
-        headers: getAuthHeader()
-    })
-    .then(() => loadAllowedUrls())
-    .catch(err => console.error("Remove URL error:", err));
+    .then(() => loadAllowedApps());
 }
 
 /* ---------------- HELPERS ---------------- */
 
-function getAuthHeader() {
+function authHeader() {
+    return {
+        "Authorization": "Bearer " + localStorage.getItem("token")
+    };
+}
+
+function authHeaderWithJSON() {
     return {
         "Authorization": "Bearer " + localStorage.getItem("token"),
         "Content-Type": "application/json"
