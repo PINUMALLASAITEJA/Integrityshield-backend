@@ -2,7 +2,7 @@ package com.integrityshield.backend.controller;
 
 import com.integrityshield.backend.dto.LoginRequest;
 import com.integrityshield.backend.dto.UserRegisterRequest;
-import com.integrityshield.backend.entity.Role; // ✅ FIX (IMPORTANT)
+import com.integrityshield.backend.entity.Role;
 import com.integrityshield.backend.service.SessionStateService;
 import com.integrityshield.backend.service.ViolationService;
 import com.integrityshield.backend.service.PermissionService;
@@ -40,44 +40,55 @@ public class StudentController {
     /* ================= REGISTER ================= */
 
     @PostMapping("/register")
-    public String register(@RequestBody Map<String, String> req) {
+    public ResponseEntity<?> register(@RequestBody Map<String, String> req) {
 
-        String roll = req.get("rollNumber");
-        String password = req.get("password");
+        try {
+            String roll = req.get("rollNumber");
+            String password = req.get("password");
 
-        if (roll == null || password == null) {
-            throw new RuntimeException("Invalid data");
+            if (roll == null || password == null) {
+                return ResponseEntity.badRequest().body("Invalid data");
+            }
+
+            UserRegisterRequest request = new UserRegisterRequest();
+            request.setUserIdentifier(roll);
+            request.setPassword(password);
+            request.setRole(Role.STUDENT);
+
+            String res = authService.register(request);
+
+            return ResponseEntity.ok(res);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(e.getMessage());
         }
-
-        UserRegisterRequest request = new UserRegisterRequest();
-        request.setUserIdentifier(roll);
-        request.setPassword(password);
-
-        // ✅ FIXED ROLE USAGE
-        request.setRole(Role.STUDENT);
-
-        return authService.register(request);
     }
 
     /* ================= LOGIN ================= */
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody Map<String, String> req) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> req) {
 
-        String roll = req.get("rollNumber");
-        String password = req.get("password");
+        try {
+            String roll = req.get("rollNumber");
+            String password = req.get("password");
 
-        if (roll == null || password == null) {
-            throw new RuntimeException("Invalid data");
+            if (roll == null || password == null) {
+                return ResponseEntity.badRequest().body("Invalid data");
+            }
+
+            LoginRequest request = new LoginRequest();
+            request.setUserIdentifier(roll);
+            request.setPassword(password);
+
+            String token = authService.login(request);
+
+            return ResponseEntity.ok(Map.of("token", token));
+
+        } catch (Exception e) {
+            // 🔥 IMPORTANT: avoid 500 crash → send clean message
+            return ResponseEntity.status(401).body(e.getMessage());
         }
-
-        LoginRequest request = new LoginRequest();
-        request.setUserIdentifier(roll);
-        request.setPassword(password);
-
-        String token = authService.login(request);
-
-        return Map.of("token", token);
     }
 
     /* ================= DASHBOARD ================= */

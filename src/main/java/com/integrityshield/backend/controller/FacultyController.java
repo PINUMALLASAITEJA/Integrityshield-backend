@@ -34,11 +34,9 @@ public class FacultyController {
         this.permissionService = permissionService;
     }
 
-    /* ================= SESSION ================= */
-
     @PostMapping("/start-session")
     public String startSession(@RequestParam(required = false) String allowedApps,
-                               Authentication auth) {
+                              Authentication auth) {
 
         if (sessionService.getActiveSessionId() != null) {
             return "Session already active";
@@ -46,7 +44,7 @@ public class FacultyController {
 
         Long sessionId = sessionService.start(1L, allowedApps);
 
-        // 🔥 CRITICAL FIX (RESET VIOLATIONS HERE)
+        // reset violations for fresh session
         violationService.resetViolations();
 
         return "Session started. ID: " + sessionId;
@@ -63,8 +61,6 @@ public class FacultyController {
         return "Session stopped";
     }
 
-    /* ================= ALERTS ================= */
-
     @GetMapping("/alerts")
     public List<Violation> viewEscalatedAlerts() {
 
@@ -74,14 +70,10 @@ public class FacultyController {
         return violationService.getCurrentSessionAlerts();
     }
 
-    /* ================= STUDENTS ================= */
-
     @GetMapping("/students")
     public Set<String> activeStudents() {
         return sessionService.getActiveStudents();
     }
-
-    /* ================= SESSIONS ================= */
 
     @GetMapping("/sessions")
     public List<Session> getSessionsByDate(
@@ -93,17 +85,13 @@ public class FacultyController {
     }
 
     @GetMapping("/session-report/{sessionId}")
-    public List<StudentFlagDTO> getSessionReport(
-            @PathVariable Long sessionId) {
-
+    public List<StudentFlagDTO> getSessionReport(@PathVariable Long sessionId) {
         return violationService.getSessionReport(sessionId);
     }
 
-    /* ================= ALLOWED APPS ================= */
-
     @PostMapping("/allow-app")
     public void allowApp(@RequestBody String appName) {
-        permissionService.addAllowedApp(appName.trim()); // ✅ FIX (clean input)
+        permissionService.addAllowedApp(appName.trim());
     }
 
     @GetMapping("/allowed-apps")
@@ -113,14 +101,12 @@ public class FacultyController {
 
     @DeleteMapping("/remove-app")
     public void removeApp(@RequestParam String appName) {
-        permissionService.removeAllowedApp(appName.trim()); // ✅ FIX
+        permissionService.removeAllowedApp(appName.trim());
     }
-
-    /* ================= ALLOWED URLS ================= */
 
     @PostMapping("/allow-url")
     public void allowUrl(@RequestBody String url) {
-        permissionService.addAllowedUrl(url.trim()); // ✅ FIX
+        permissionService.addAllowedUrl(url.trim());
     }
 
     @GetMapping("/allowed-urls")
@@ -130,6 +116,6 @@ public class FacultyController {
 
     @DeleteMapping("/remove-url")
     public void removeUrl(@RequestParam String url) {
-        permissionService.removeAllowedUrl(url.trim()); // ✅ FIX
+        permissionService.removeAllowedUrl(url.trim());
     }
 }

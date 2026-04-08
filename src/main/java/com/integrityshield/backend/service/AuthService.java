@@ -62,11 +62,8 @@ public class AuthService {
             throw new RuntimeException("Invalid input");
         }
 
-        // 🔥 ONLY STUDENT LOGIN ALLOWED HERE
-        User user = userRepo.findByUserIdentifierAndRole(
-                request.getUserIdentifier(),
-                com.integrityshield.backend.entity.Role.STUDENT
-        ).orElseThrow(() -> new RuntimeException("Student not found"));
+        User user = userRepo.findByUserIdentifier(request.getUserIdentifier())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
