@@ -8,4 +8,6 @@ RUN chmod +x mvnw && ./mvnw clean package -Dmaven.test.skip=true
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "java -Dserver.port=$PORT -Dserver.address=0.0.0.0 -jar target/backend-0.0.1-SNAPSHOT.jar"]
+ENV PORT=10000
+
+CMD java -Dserver.port=$PORT -Dserver.address=0.0.0.0 -jar target/backend-0.0.1-SNAPSHOT.jar
