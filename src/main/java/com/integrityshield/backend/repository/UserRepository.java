@@ -16,6 +16,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUserIdentifier(String userIdentifier);
 
+    // 🔥 ADD THIS (CRITICAL)
+    Optional<User> findByUserIdentifierAndRole(String userIdentifier, Role role);
+
     boolean existsByUserIdentifier(String userIdentifier);
 
     @Modifying

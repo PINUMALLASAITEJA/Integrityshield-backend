@@ -54,20 +54,24 @@ public class AuthService {
 
     /* ================= LOGIN ================= */
 
+    /* ================= LOGIN ================= */
+
     public String login(LoginRequest request) {
 
         if (request.getUserIdentifier() == null || request.getPassword() == null) {
             throw new RuntimeException("Invalid input");
         }
 
-        User user = userRepo.findByUserIdentifier(request.getUserIdentifier())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // 🔥 ONLY STUDENT LOGIN ALLOWED HERE
+        User user = userRepo.findByUserIdentifierAndRole(
+                request.getUserIdentifier(),
+                com.integrityshield.backend.entity.Role.STUDENT
+        ).orElseThrow(() -> new RuntimeException("Student not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // 🔥 ROLE AUTO USED FROM DB
         return jwtUtil.generateToken(
                 user.getUserIdentifier(),
                 user.getRole().name()
