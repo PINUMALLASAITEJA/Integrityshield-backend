@@ -44,31 +44,36 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-            	    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // ✅ Preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-            	    .requestMatchers(
-            	        "/",
-            	        "/test",
-            	        "/login.html",
-            	        "/register.html",
-            	        "/faculty-dashboard.html",
-            	        "/css/**",
-            	        "/js/**",
-            	        "/ws/**"
-            	    ).permitAll()
+                // ✅ Static + UI
+                .requestMatchers(
+                    "/",
+                    "/test",
+                    "/login.html",
+                    "/register.html",
+                    "/faculty-dashboard.html",
+                    "/css/**",
+                    "/js/**",
+                    "/ws/**"
+                ).permitAll()
 
-            	    .requestMatchers("/api/auth/**").permitAll()
-            	    .requestMatchers("/api/student/login").permitAll()
+                // ✅ PUBLIC APIs (🔥 FIX HERE)
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/student/login").permitAll()
+                .requestMatchers("/api/student/register").permitAll()   // 🔥 ADDED
 
-            	    // 🔥 CRITICAL FIX (EXPLICIT METHOD MATCHING)
-            	    .requestMatchers(HttpMethod.POST, "/api/faculty/**").hasRole("FACULTY")
-            	    .requestMatchers(HttpMethod.GET, "/api/faculty/**").hasRole("FACULTY")
-            	    .requestMatchers(HttpMethod.DELETE, "/api/faculty/**").hasRole("FACULTY")
+                // 🔒 FACULTY APIs
+                .requestMatchers(HttpMethod.POST, "/api/faculty/**").hasRole("FACULTY")
+                .requestMatchers(HttpMethod.GET, "/api/faculty/**").hasRole("FACULTY")
+                .requestMatchers(HttpMethod.DELETE, "/api/faculty/**").hasRole("FACULTY")
 
-            	    .requestMatchers("/api/student/**").authenticated()
+                // 🔒 STUDENT APIs (except login/register)
+                .requestMatchers("/api/student/**").authenticated()
 
-            	    .anyRequest().permitAll()
-            	)
+                .anyRequest().permitAll()
+            )
 
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
