@@ -14,4 +14,4 @@ RUN chmod +x mvnw && ./mvnw clean package -Dmaven.test.skip=true
 EXPOSE 10000
 
 # Run using Render PORT (CRITICAL FIX)
-CMD ["sh", "-c", "java -Dserver.port=$PORT -Dserver.address=0.0.0.0 -jar target/backend-0.0.1-SNAPSHOT.jar"]
+CMD java -Dserver.port=${PORT} -Dserver.address=0.0.0.0 -jar target/backend-0.0.1-SNAPSHOT.jar
