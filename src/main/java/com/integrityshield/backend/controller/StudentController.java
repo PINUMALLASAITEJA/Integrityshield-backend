@@ -37,8 +37,6 @@ public class StudentController {
         this.authService = authService;
     }
 
-    /* ================= REGISTER ================= */
-
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Map<String, String> req) {
 
@@ -64,8 +62,6 @@ public class StudentController {
         }
     }
 
-    /* ================= LOGIN ================= */
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> req) {
 
@@ -86,12 +82,11 @@ public class StudentController {
             return ResponseEntity.ok(Map.of("token", token));
 
         } catch (Exception e) {
-            // 🔥 IMPORTANT: avoid 500 crash → send clean message
             return ResponseEntity.status(401).body(e.getMessage());
         }
     }
 
-    /* ================= DASHBOARD ================= */
+    /* ================= DASHBOARD (ONLY JOIN HERE) ================= */
 
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/dashboard")
@@ -103,12 +98,13 @@ public class StudentController {
             return ResponseEntity.status(403).body("Session not active");
         }
 
+        // ✅ JOIN ONLY HERE
         sessionService.studentJoined(roll);
 
         return ResponseEntity.ok("Session active");
     }
 
-    /* ================= SESSION ================= */
+    /* ================= SESSION (NO JOIN HERE) ================= */
 
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/session")
@@ -120,10 +116,6 @@ public class StudentController {
             return ResponseEntity.status(403).body("No active session");
         }
 
-        String roll = auth.getName();
-
-        sessionService.studentJoined(roll);
-
         List<String> apps = permissionService.getAllowedApps();
 
         return ResponseEntity.ok(
@@ -133,8 +125,6 @@ public class StudentController {
                 )
         );
     }
-
-    /* ================= VIOLATION ================= */
 
     @PreAuthorize("hasRole('STUDENT')")
     @PostMapping("/violation")
