@@ -30,12 +30,14 @@ public class SessionStateService {
 
     public Long start(Long facultyId, String allowedApps) {
 
-        sessionRepo.findByStatus("ACTIVE")
-                .ifPresent(existing -> {
-                    existing.setStatus("ENDED");
-                    existing.setEndTime(LocalDateTime.now());
-                    sessionRepo.save(existing);
-                });
+    	// 🔥 FORCE CLOSE ALL ACTIVE SESSIONS
+    	List<Session> activeSessions = sessionRepo.findAllByStatus("ACTIVE");
+
+    	for (Session existing : activeSessions) {
+    	    existing.setStatus("ENDED");
+    	    existing.setEndTime(LocalDateTime.now());
+    	    sessionRepo.save(existing);
+    	}
 
         permissionService.clearAllApps();
 
