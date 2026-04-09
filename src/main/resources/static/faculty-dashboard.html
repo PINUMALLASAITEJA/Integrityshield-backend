@@ -29,11 +29,14 @@
 
 <div class="container">
 
-    <!-- SESSION MESSAGE -->
-    <div id="sessionMsg" class="session-msg" style="display:none;"></div>
+    <!-- 🔥 WELCOME SECTION -->
+    <div id="welcomeSection" class="glass-card" style="padding:40px; text-align:center;">
+        <h2>Welcome to IntegrityShield 🚀</h2>
+        <p>Click <b>Start</b> to begin monitoring students.</p>
+    </div>
 
-    <!-- HOME SECTION -->
-    <div id="homeSection">
+    <!-- 🔥 STUDENTS SECTION -->
+    <div id="homeSection" style="display:none;">
         <h3>Students Online</h3>
         <ul id="studentsList"></ul>
     </div>
@@ -45,7 +48,6 @@
 
         <div class="permission-grid">
 
-            <!-- APPS -->
             <div>
                 <h4>Applications</h4>
 
@@ -57,7 +59,6 @@
                 <ul id="allowedAppsList"></ul>
             </div>
 
-            <!-- URLS -->
             <div>
                 <h4>URLs</h4>
 
@@ -74,7 +75,6 @@
 
 </div>
 
-<!-- OVERLAY (NEW) -->
 <div id="overlay" class="overlay">
     <div class="overlay-box">
         <button onclick="closeOverlay()" style="float:right;">X</button>
@@ -82,7 +82,7 @@
     </div>
 </div>
 
-<script src="js/faculty-dashboard.js?v=12"></script>
+<script src="js/faculty-dashboard.js?v=13"></script>
 
 </body>
 </html>

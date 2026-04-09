@@ -6,7 +6,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     showHome();
-    updateSessionStatus(false);
+	fetch('/api/faculty/session-status', {
+	    headers: authHeader()
+	})
+	.then(res => res.text())
+	.then(data => {
+	    updateSessionStatus(data === "ACTIVE");
+	})
+	.catch(() => updateSessionStatus(false));
     connectWebSocket();
 
     loadAllowedApps();
@@ -95,9 +102,16 @@ function connectWebSocket() {
 
 /* ---------------- SESSION END ---------------- */
 
-function handleSessionEnd() {
-    document.getElementById("studentsList").innerHTML = "";
-    studentViolations = {};
+function updateSessionStatus(active) {
+
+    const badge = document.getElementById("sessionStatus");
+
+    badge.innerText = active ? "Active" : "Inactive";
+    badge.classList.remove("active", "inactive");
+    badge.classList.add(active ? "active" : "inactive");
+
+    // 🔥 IMPORTANT
+    toggleDashboard(active);
 }
 
 /* ---------------- STUDENTS ---------------- */
@@ -209,6 +223,19 @@ function authHeaderWithJSON() {
         "Authorization": "Bearer " + localStorage.getItem("token"),
         "Content-Type": "application/json"
     };
+}
+function toggleDashboard(active) {
+
+    const welcome = document.getElementById("welcomeSection");
+    const students = document.getElementById("homeSection");
+
+    if (active) {
+        welcome.style.display = "none";
+        students.style.display = "block";
+    } else {
+        welcome.style.display = "block";
+        students.style.display = "none";
+    }
 }
 
 function logout() {
