@@ -78,6 +78,11 @@ public class SessionStateService {
 
     public void studentJoined(String roll) {
 
+        // 🔥 CRITICAL SAFETY CHECK
+        if (getActiveSessionId() == null) {
+            throw new RuntimeException("No active session");
+        }
+
         if (activeStudents.add(roll)) {
             messagingTemplate.convertAndSend("/topic/student-join", roll);
         }

@@ -86,7 +86,7 @@ public class StudentController {
         }
     }
 
-    /* ================= DASHBOARD (ONLY JOIN HERE) ================= */
+    /* ================= DASHBOARD (JOIN ONLY HERE) ================= */
 
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/dashboard")
@@ -94,26 +94,30 @@ public class StudentController {
 
         String roll = auth.getName();
 
-        if (sessionService.getActiveSessionId() == null) {
-            return ResponseEntity.status(403).body("Session not active");
+        Long sessionId = sessionService.getActiveSessionId();
+
+        // 🔥 HARD BLOCK
+        if (sessionId == null) {
+            return ResponseEntity.status(403).body("NO_ACTIVE_SESSION");
         }
 
-        // ✅ JOIN ONLY HERE
         sessionService.studentJoined(roll);
 
-        return ResponseEntity.ok("Session active");
+        return ResponseEntity.ok("JOINED");
     }
 
-    /* ================= SESSION (NO JOIN HERE) ================= */
+    /* ================= SESSION STATUS ================= */
 
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/session")
     public ResponseEntity<?> getSession(Authentication auth) {
 
-        var session = sessionService.getActiveSession();
+        Long sessionId = sessionService.getActiveSessionId();
 
-        if (session == null) {
-            return ResponseEntity.status(403).body("No active session");
+        if (sessionId == null) {
+            return ResponseEntity.ok(
+                    Map.of("status", "INACTIVE")
+            );
         }
 
         List<String> apps = permissionService.getAllowedApps();
@@ -136,7 +140,7 @@ public class StudentController {
         String roll = auth.getName();
 
         if (sessionService.getActiveSessionId() == null) {
-            return "No active session";
+            return "NO_ACTIVE_SESSION";
         }
 
         violationService.saveViolation(roll, appName, duration, ongoing);
